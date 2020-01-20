@@ -1,0 +1,36 @@
+﻿@using Web.Services
+@inject IModalService ModalService
+@inject ContactService ServiceContact
+
+<div class="simple-form">
+    <div class="form-group">
+        Are you sure you want to delete the record of @Contact.FirstName @Contact.LastName?
+    </div>
+
+    <button class="btn btn-danger" @onclick="(() => DeleteContact(Contact.Id))">
+        Yes
+    </button>
+
+    <button @onclick="Cancel" class="btn btn-primary">No</button>
+</div>
+
+@code {
+    Contact Contact { get; set; }
+    [CascadingParameter] ModalParameters Parameters { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Contact = Parameters.Get<Contact>("Contact");
+    }
+
+    protected async void DeleteContact(int id)
+    {
+        await ServiceContact.DeleteContactAsync(id);
+        ModalService.Close(ModalResult.Ok($"The user said 'Yes'"));
+    }
+
+    protected void Cancel()
+    {
+        ModalService.Close(ModalResult.Cancel());
+    }
+}

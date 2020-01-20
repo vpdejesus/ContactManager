@@ -1,0 +1,63 @@
+﻿@using Web.Services
+@inject IModalService ModalService
+@inject ContactService ServiceContact
+
+<div class="simple-form">
+    <div class="form-group">
+        <label for="first-name">First Name</label>
+        <input @bind="Contact.FirstName" type="text" class="form-control" id="first-name" placeholder="Enter First Name" />
+    </div>
+
+    <div class="form-group">
+        <label for="last-name">Last Name</label>
+        <input @bind="Contact.LastName" type="text" class="form-control" id="last-name" placeholder="Enter Last Name" />
+    </div>
+
+    <div class="form-group">
+        <label for="mobile-no">Mobile No.</label>
+        <input @bind="Contact.MobileNo" type="text" class="form-control" id="mobile-no" placeholder="Enter Mobile No." />
+    </div>
+
+    <div class="form-group">
+        <label for="email-address">Email Address</label>
+        <input @bind="Contact.EmailAddress" type="text" class="form-control" id="last-name" placeholder="Enter Email Address" />
+    </div>
+
+    <div class="form-group">
+        <label for="address">Address</label>
+        <input @bind="Contact.Address" type="text" class="form-control" id="address" placeholder="Enter Address" />
+    </div>
+
+    <button @onclick="Save" class="btn btn-primary">Save</button>
+    <button @onclick="Cancel" class="btn btn-secondary">Cancel</button>
+</div>
+
+@code {
+
+    Contact Contact { get; set; }
+    [CascadingParameter] ModalParameters Parameters { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Contact = Parameters.Get<Contact>("Contact");
+    }
+
+    protected async Task Save()
+    {
+        if (Contact.Id != 0)
+        {
+            await ServiceContact.UpdateContactAsync(Contact.Id, Contact);
+        }
+        else
+        {
+            await ServiceContact.InsertContactAsync(Contact);
+        }
+
+        ModalService.Close(ModalResult.Ok($"Data was save successfully."));
+    }
+
+    void Cancel()
+    {
+        ModalService.Close(ModalResult.Cancel());
+    }
+}

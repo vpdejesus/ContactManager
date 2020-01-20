@@ -1,0 +1,142 @@
+﻿@page "/contactdetail"
+@using Radzen
+@using Radzen.Blazor
+@using Web.Services
+@using ApplicationCore.Entitites
+
+<RadzenContent Container="main">
+    <ChildContent>
+        <RadzenHeading Size="H2" Text="Contacts">
+        </RadzenHeading>
+        <div class="row">
+            <div class="col-md-12">
+
+                <div class="row">
+                    <div class="col-md-3">
+                        <RadzenButton Icon="add_circle_outline" style="margin-bottom: 10px" Text="Add" Click="@AddContact_Click">
+                        </RadzenButton>
+                    </div>
+                    <div class="input-group col-md-4 offset-md-5">
+                        <RadzenTextBox style="width: 250px" @bind-Value="@((searchString))" Placeholder="Search Contact" Name="SearchBox">
+                        </RadzenTextBox>
+                        <RadzenButton Icon="search" style="margin-left: 5px" Click="@Search_Click">
+                        </RadzenButton>
+                    </div>
+                </div>
+
+                <RadzenGrid @ref="dgContact" AllowFiltering="true" AllowPaging="true" PageSize="10" AllowSorting="false"
+                            Data="@contacts" TItem="Contact" Value="@contact" RowDoubleClick="@dgContact_RowDoubleClick">
+                    <Columns>
+                        <RadzenGridColumn TItem="Contact" Property="FirstName" Title="First Name" Width="30" />
+                        <RadzenGridColumn TItem="Contact" Property="LastName" Title="Last Name" Width="30" />
+                        <RadzenGridColumn TItem="Contact" Property="MobileNo" Title="Mobile No." Width="30" />
+                        <RadzenGridColumn TItem="Contact" Property="EmailAddress" Title="Email Address" Width="30" />
+                        <RadzenGridColumn TItem="Contact" Property="Address" Title="Address" Width="200" />
+                        <RadzenGridColumn TItem="Contact" Context="contact" Bubble="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="50px">
+                            <Template Context="contact">
+                                <RadzenButton Icon="edit" Size="ButtonSize.Small" Click="@(args => EditContact_Click(contact))">
+                                </RadzenButton>
+                            </Template>
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="Contact" Context="contact" Bubble="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="50px">
+                            <Template Context="contact">
+                                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="close" Size="ButtonSize.Small" Click="@(args => DeleteContact_Click(args, contact))">
+                                </RadzenButton>
+                            </Template>
+                        </RadzenGridColumn>
+                    </Columns>
+                </RadzenGrid>
+            </div>
+        </div>
+    </ChildContent>
+</RadzenContent>
+
+@code {
+    [Inject]
+    protected DialogService DialogService { get; set; }
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+    [Inject]
+    protected ContactService ContactService { get; set; }
+
+    RadzenGrid<Contact> dgContact;
+    protected IEnumerable<Contact> contacts;
+    protected Contact contact = new Contact();
+    protected string searchString { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    protected async Task Load()
+    {
+        contacts = await ContactService.GetContactsAsync();
+    }
+
+    protected async void AddContact_Click(MouseEventArgs args)
+    {
+        var result = await DialogService.OpenAsync<AddContact>("Add Contact", null);
+        await Load();
+        await InvokeAsync(() => { StateHasChanged(); });
+    }
+
+    protected async void EditContact_Click(Contact contact)
+    {
+        var result = await DialogService.OpenAsync<EditContact>("Edit Contact",
+            new Dictionary<string, object>()
+            {
+                {
+                    "Id", contact.Id
+                }
+                });
+
+        await Load();
+        await InvokeAsync(() => { StateHasChanged(); });
+    }
+
+    protected async void DeleteContact_Click(MouseEventArgs args, Contact contact)
+    {
+        try
+        {
+            await ContactService.DeleteContactAsync(contact.Id);
+            await Load();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, $"Error", ex.Message);
+        }
+    }
+
+    protected async void Search_Click()
+    {
+        if (String.IsNullOrEmpty(searchString) == false)
+        {
+            contacts = contacts.Where(c =>
+                         c.FirstName.Contains(searchString) ||
+                         c.LastName.Contains(searchString) ||
+                         c.MobileNo.Contains(searchString) ||
+                         c.EmailAddress.Contains(searchString) ||
+                         c.Address.Contains(searchString));
+        }
+        else
+        {
+            await Load();
+        }
+    }
+
+    protected async void dgContact_RowDoubleClick(Contact contact)
+    {
+        var result = await DialogService.OpenAsync<EditContact>("Edit Contact",
+            new Dictionary<string, object>()
+            {
+                {
+                    "Id", contact.Id
+                }
+                });
+
+        await Load();
+        await InvokeAsync(() => { StateHasChanged(); });
+    }
+}

@@ -1,0 +1,161 @@
+﻿@page "/editcontact/{Id}"
+@using Web.Services
+@using ApplicationCore.Entitites
+
+<RadzenContent Container="main">
+    <ChildContent>
+        <div style="" class="row">
+            <div class="col-md-9">
+                <RadzenLabel style="font-weight: bold" Text="Item no longer available." Visible="@(!canEdit)">
+                </RadzenLabel>
+            </div>
+            <div class="col-md-3">
+                <RadzenButton ButtonStyle="ButtonStyle.Secondary" style="margin-bottom: 20px" Text="Close" Visible="@(!canEdit)" Click="@Close_Click">
+                </RadzenButton>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <RadzenTemplateForm Data="@(contact)" TItem="Contact" Visible="@(contact != null && canEdit)" Submit="@Form_Submit">
+                    <ChildContent>
+                        <div style="margin-bottom: 1rem" class="row">
+                            <div class="col-md-3">
+                                <RadzenLabel Text="First Name" Component="FirstName" style="width: 100%">
+                                </RadzenLabel>
+                            </div>
+                            <div class="col-md-9">
+                                <RadzenTextBox MaxLength="256" style="width: 100%" @bind-Value="@((contact.FirstName))" Name="FirstName">
+                                </RadzenTextBox>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1rem" class="row">
+                            <div class="col-md-3">
+                                <RadzenLabel Text="Last Name" Component="LastName" style="width: 100%">
+                                </RadzenLabel>
+                            </div>
+                            <div class="col-md-9">
+                                <RadzenTextBox MaxLength="256" style="width: 100%" @bind-Value="@((contact.LastName))" Name="LastName">
+                                </RadzenTextBox>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1rem" class="row">
+                            <div class="col-md-3">
+                                <RadzenLabel Text="Mobile No." Component="Mobile No." style="width: 100%">
+                                </RadzenLabel>
+                            </div>
+                            <div class="col-md-9">
+                                <RadzenTextBox MaxLength="256" style="width: 100%" @bind-Value="@((contact.MobileNo))" Name="MobileNo">
+                                </RadzenTextBox>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1rem" class="row">
+                            <div class="col-md-3">
+                                <RadzenLabel Text="Email" Component="EmailAddress" style="width: 100%">
+                                </RadzenLabel>
+                            </div>
+                            <div class="col-md-9">
+                                <RadzenTextBox MaxLength="256" style="display: block; width: 100%" @bind-Value="@((contact.EmailAddress))" Name="EmailAddress">
+                                </RadzenTextBox>
+                                <RadzenRequiredValidator Component="EmailAddress" Text="Email is required" style="position: absolute">
+                                </RadzenRequiredValidator>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1rem" class="row">
+                            <div class="col-md-3">
+                                <RadzenLabel Text="Address" Component="Address" style="width: 100%">
+                                </RadzenLabel>
+                            </div>
+                            <div class="col-md-9">
+                                <RadzenTextBox MaxLength="256" style="width: 100%" @bind-Value="@((contact.Address))" Name="Address">
+                                </RadzenTextBox>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col offset-sm-3">
+                                <RadzenButton ButtonType="ButtonType.Submit" Icon="save" Text="Save" ButtonStyle="ButtonStyle.Primary">
+                                </RadzenButton>
+                                <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancel" Click="@Cancel_Click">
+                                </RadzenButton>
+                            </div>
+                        </div>
+                    </ChildContent>
+                </RadzenTemplateForm>
+            </div>
+        </div>
+    </ChildContent>
+</RadzenContent>
+
+@code {
+    [Parameter]
+    public dynamic Id { get; set; }
+    [Inject]
+    protected ContactService ContactService { get; set; }
+    [Inject]
+    protected DialogService DialogService { get; set; }
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+
+    bool _canEdit;
+    protected bool canEdit
+    {
+        get
+        {
+            return _canEdit;
+        }
+        set
+        {
+            if (_canEdit != value)
+            {
+                _canEdit = value;
+                InvokeAsync(() => { StateHasChanged(); });
+            }
+        }
+    }
+
+    Contact _contact;
+    protected Contact contact
+    {
+        get
+        {
+            return _contact;
+        }
+        set
+        {
+            if (_contact != value)
+            {
+                _contact = value;
+                InvokeAsync(() => { StateHasChanged(); });
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        canEdit = true;
+        contact = await ContactService.GetContactByIdAsync(int.Parse($"{Id}"));
+    }
+
+    protected void Close_Click(MouseEventArgs args)
+    {
+        DialogService.Close(null);
+    }
+
+    protected async void Form_Submit(Contact args)
+    {
+        try
+        {
+            await ContactService.UpdateContactAsync(int.Parse($"{Id}"), contact);
+            DialogService.Close(contact);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, $"Error", ex.Message);
+        }
+    }
+
+    protected void Cancel_Click(MouseEventArgs args)
+    {
+        DialogService.Close(null);
+    }
+
+}
