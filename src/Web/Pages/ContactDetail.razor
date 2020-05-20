@@ -1,8 +1,4 @@
 ﻿@page "/contactdetail"
-@using Radzen
-@using Radzen.Blazor
-@using Web.Services
-@using ApplicationCore.Entitites
 
 <RadzenContent Container="main">
     <ChildContent>
@@ -10,22 +6,21 @@
         </RadzenHeading>
         <div class="row">
             <div class="col-md-12">
-
                 <div class="row">
                     <div class="col-md-3">
                         <RadzenButton Icon="add_circle_outline" style="margin-bottom: 10px" Text="Add" Click="@AddContact_Click">
                         </RadzenButton>
                     </div>
                     <div class="input-group col-md-4 offset-md-5">
-                        <RadzenTextBox style="width: 250px" @bind-Value="@((searchString))" Placeholder="Search Contact" Name="SearchBox">
+                        <RadzenTextBox style="width: 250px" @bind-Value="@((SearchString))" Placeholder="Search Contact" Name="SearchBox">
                         </RadzenTextBox>
                         <RadzenButton Icon="search" style="margin-left: 5px" Click="@Search_Click">
                         </RadzenButton>
                     </div>
                 </div>
 
-                <RadzenGrid @ref="dgContact" AllowFiltering="true" AllowPaging="true" PageSize="10" AllowSorting="false"
-                            Data="@contacts" TItem="Contact" Value="@contact" RowDoubleClick="@dgContact_RowDoubleClick">
+                <RadzenGrid @ref="ContactGrid" AllowFiltering="true" AllowPaging="true" PageSize="10" AllowSorting="false"
+                            Data="@_contacts" TItem="Contact" Value="@_contact" RowDoubleClick="@ContactGrid_RowDoubleClick">
                     <Columns>
                         <RadzenGridColumn TItem="Contact" Property="FirstName" Title="First Name" Width="30" />
                         <RadzenGridColumn TItem="Contact" Property="LastName" Title="Last Name" Width="30" />
@@ -33,14 +28,14 @@
                         <RadzenGridColumn TItem="Contact" Property="EmailAddress" Title="Email Address" Width="30" />
                         <RadzenGridColumn TItem="Contact" Property="Address" Title="Address" Width="200" />
                         <RadzenGridColumn TItem="Contact" Context="contact" Bubble="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="50px">
-                            <Template Context="contact">
-                                <RadzenButton Icon="edit" Size="ButtonSize.Small" Click="@(args => EditContact_Click(contact))">
+                            <Template Context="Contact">
+                                <RadzenButton Icon="edit" Size="ButtonSize.Small" Click="@(args => EditContact_Click(Contact))">
                                 </RadzenButton>
                             </Template>
                         </RadzenGridColumn>
-                        <RadzenGridColumn TItem="Contact" Context="contact" Bubble="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="50px">
+                        <RadzenGridColumn TItem="Contact" Context="Contact" Bubble="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="50px">
                             <Template Context="contact">
-                                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="close" Size="ButtonSize.Small" Click="@(args => DeleteContact_Click(args, contact))">
+                                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="close" Size="ButtonSize.Small" Click="@(args => DeleteContact_Click(args, _contact))">
                                 </RadzenButton>
                             </Template>
                         </RadzenGridColumn>
@@ -53,35 +48,35 @@
 
 @code {
     [Inject]
-    protected DialogService DialogService { get; set; }
+    private DialogService DialogService { get; set; }
     [Inject]
-    protected NotificationService NotificationService { get; set; }
+    private NotificationService NotificationService { get; set; }
     [Inject]
-    protected ContactService ContactService { get; set; }
+    private ContactService ContactService { get; set; }
 
-    RadzenGrid<Contact> dgContact;
-    protected IEnumerable<Contact> contacts;
-    protected Contact contact = new Contact();
-    protected string searchString { get; set; }
+    RadzenGrid<Contact> ContactGrid;
+    private IEnumerable<Contact> _contacts;
+    private readonly Contact _contact = new Contact();
+    private string SearchString { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         await Load();
     }
 
-    protected async Task Load()
+    private async Task Load()
     {
-        contacts = await ContactService.GetContactsAsync();
+        _contacts = await ContactService.GetContactsAsync();
     }
 
-    protected async void AddContact_Click(MouseEventArgs args)
+    private async void AddContact_Click(MouseEventArgs args)
     {
         var result = await DialogService.OpenAsync<AddContact>("Add Contact", null);
         await Load();
-        await InvokeAsync(() => { StateHasChanged(); });
+        await InvokeAsync(StateHasChanged);
     }
 
-    protected async void EditContact_Click(Contact contact)
+    private async void EditContact_Click(Contact contact)
     {
         var result = await DialogService.OpenAsync<EditContact>("Edit Contact",
             new Dictionary<string, object>()
@@ -89,13 +84,13 @@
                 {
                     "Id", contact.Id
                 }
-                });
+                    });
 
         await Load();
-        await InvokeAsync(() => { StateHasChanged(); });
+        await InvokeAsync(StateHasChanged);
     }
 
-    protected async void DeleteContact_Click(MouseEventArgs args, Contact contact)
+    private async void DeleteContact_Click(MouseEventArgs args, Contact contact)
     {
         try
         {
@@ -109,16 +104,16 @@
         }
     }
 
-    protected async void Search_Click()
+    private async void Search_Click()
     {
-        if (String.IsNullOrEmpty(searchString) == false)
+        if (String.IsNullOrEmpty(SearchString) == false)
         {
-            contacts = contacts.Where(c =>
-                         c.FirstName.Contains(searchString) ||
-                         c.LastName.Contains(searchString) ||
-                         c.MobileNo.Contains(searchString) ||
-                         c.EmailAddress.Contains(searchString) ||
-                         c.Address.Contains(searchString));
+            _contacts = _contacts.Where(c =>
+                         c.FirstName.Contains(SearchString) ||
+                         c.LastName.Contains(SearchString) ||
+                         c.MobileNo.Contains(SearchString) ||
+                         c.EmailAddress.Contains(SearchString) ||
+                         c.Address.Contains(SearchString));
         }
         else
         {
@@ -126,17 +121,16 @@
         }
     }
 
-    protected async void dgContact_RowDoubleClick(Contact contact)
+    private async void ContactGrid_RowDoubleClick(Contact contact)
     {
-        var result = await DialogService.OpenAsync<EditContact>("Edit Contact",
-            new Dictionary<string, object>()
+        var result = await DialogService.OpenAsync<EditContact>("Edit Contact", new Dictionary<string, object>()
+        {
             {
-                {
-                    "Id", contact.Id
-                }
-                });
+                "Id", contact.Id
+            }
+        });
 
         await Load();
-        await InvokeAsync(() => { StateHasChanged(); });
+        await InvokeAsync(StateHasChanged);
     }
 }

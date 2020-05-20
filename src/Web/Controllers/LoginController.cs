@@ -37,7 +37,7 @@ namespace Web.Controllers
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSecurityKey"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var credential = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var expiry = DateTime.Now.AddDays(Convert.ToInt32(_configuration["JwtExpiryInDays"]));
 
             var token = new JwtSecurityToken(
@@ -45,7 +45,7 @@ namespace Web.Controllers
                 _configuration["JwtAudience"],
                 claims,
                 expires: expiry,
-                signingCredentials: creds
+                signingCredentials: credential
             );
 
             return Ok(new LoginResult { Successful = true, Token = new JwtSecurityTokenHandler().WriteToken(token) });

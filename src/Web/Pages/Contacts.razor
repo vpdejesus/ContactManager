@@ -1,24 +1,27 @@
 ﻿@page "/contacts"
-@using Web.Services
-@using ApplicationCore.Entitites
 @inject IModalService Modal
+@inject IJSRuntime JSRuntime
 @inject ContactService ServiceContact
 
 <h2>Contacts</h2>
 
 <div class="container">
     <div class="row">
-        <div class="col-xs-3">
-            <Button type="button" class="btn btn-primary btn-sm text-center" @onclick="AddContact_Click">
-                <i class="fa fa-plus"></i>
-             Add
+        <div class="text-left mb-4">
+            <Button data-toggle="modal" data-target="#contactModal"
+                    class="btn btn-primary btn-sm text-center"
+                    @onclick="AddForm_Click">
+                <i class="fas fa-plus-circle"></i>
+                Add Contact
             </Button>
         </div>
-        <div class="input-group col-md-4 offset-md-5">
-            <input type="text" class="form-control" placeholder="Search Contact" @bind="searchString" />           
-            <div class="input-group-append">
-                <Button type="button" style="margin-left: 5px" class="btn btn-primary btn-sm text-center" @onclick="SearchContact_Click">
-                    <i class="fa fa-search"></i>
+        <div class="input-group col-md-4 offset-md-6">
+            <input type="text" class="form-control" placeholder="Search Contact" @bind="SearchString" />
+
+            <div class="text-right mb-4">
+                <Button style="margin-left: 5px" class="btn btn-primary btn-sm text-center"
+                        @onclick="SearchContact_Click">
+                    <i class="fas fa-search"></i>
                     Search
                 </Button>
             </div>
@@ -27,7 +30,7 @@
 </div>
 <br />
 
-@if (contacts == null)
+@if (_contacts == null)
 {
     <p><em>Loading...</em></p>
 }
@@ -41,26 +44,30 @@ else
                 <th>Mobile No.</th>
                 <th>Email Address</th>
                 <th>Address</th>
+                <th></th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var item in contacts)
+            @foreach (var contact in _contacts)
             {
                 <tr>
-                    <td>@item.FirstName</td>
-                    <td>@item.LastName</td>
-                    <td>@item.MobileNo</td>
-                    <td>@item.EmailAddress</td>
-                    <td>@item.Address</td>
+                    <td>@contact.FirstName</td>
+                    <td>@contact.LastName</td>
+                    <td>@contact.MobileNo</td>
+                    <td>@contact.EmailAddress</td>
+                    <td>@contact.Address</td>
                     <td>
-                        <button type="button" class="btn btn-outline-dark btn-sm text-center"
-                                @onclick="(() => EditContact_Click(item.Id))">
-                                <i class="fa fa-pencil-square-o"></i>
-                        </button>
-                        <button type="button" class="btn btn-outline-danger btn-sm text-center"
-                                @onclick="(() => DeleteContact_Click(item.Id))">
-                                <i class="fa fa-trash-o"></i>
-                        </button>
+                        <Button data-toggle="modal" data-target="#contactModal"
+                                class="btn btn-outline-dark btn-sm text-center"
+                                @onclick="(() => EditForm_Click(contact))">
+                            <i class="far fa-edit"></i>
+                        </Button>
+                        <Button data-toggle="modal" data-target="#deleteModal" 
+                                class="btn btn-outline-danger btn-sm text-center"
+                                @onclick="(() => ForDelete(contact))">
+                            <i class="fas fa-trash-alt"></i>
+                        </Button>
                     </td>
                 </tr>
             }
@@ -68,69 +75,83 @@ else
     </table>
 }
 
+<AddEditForm Title="@Title" Contact="@_contact" OnClose="@AddEditForm_Close"></AddEditForm>
+<DeleteContact Contact="@_contact" OnClick="@DeleteContact" />
+
 @code {
-    protected IEnumerable<Contact> contacts;
-    protected Contact contact = new Contact();
-    protected string searchString { get; set; }
+    Contact _contact = new Contact();
+    private IEnumerable<Contact> _contacts;
+    private string Title { get; set; }
+    private string SearchString { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         await Load();
     }
 
-    protected async Task Load()
+    private async Task Load()
     {
-        contacts = await ServiceContact.GetContactsAsync();
+        _contacts = await ServiceContact.GetContactsAsync();
     }
 
-    protected void AddContact_Click()
+    private void AddContact_Click()
     {
-        contact = new Contact();
+        Modal.Show<UpdateForm>("Add Contact");
+    }
+
+    private void EditContact_Click(int id)
+    {
         var parameters = new ModalParameters();
-        parameters.Add("Contact", contact);
-
-        Modal.OnClose += ModalClosed;
-        Modal.Show("Add Contact", typeof(UpdateForm), parameters);
+        parameters.Add(nameof(UpdateForm.Id), id);
+        Modal.Show<UpdateForm>("Edit Contact", parameters);
     }
 
-    protected async void EditContact_Click(int id)
+    private void DeleteContact_Click(int id)
     {
-        contact = await ServiceContact.GetContactByIdAsync(id);
-
         var parameters = new ModalParameters();
-        parameters.Add("Contact", contact);
-        Modal.OnClose += ModalClosed;
-        Modal.Show("Edit Contact", typeof(UpdateForm), parameters);
+        parameters.Add(nameof(DeleteForm.Id), id);
+        Modal.Show<DeleteForm>("Delete Contact", parameters);
     }
 
-    protected async void DeleteContact_Click(int id)
+    private void AddForm_Click()
     {
-        contact = await ServiceContact.GetContactByIdAsync(id);
-
-        var parameters = new ModalParameters();
-        parameters.Add("Contact", contact);
-
-        Modal.OnClose += ModalClosed;
-        Modal.Show("Delete Contact", typeof(DeleteForm), parameters);
+        Title = "Add Contact";
+        _contact = new Contact();
     }
 
-    async void ModalClosed(ModalResult modalResult)
+    private void EditForm_Click(Contact contact)
     {
+        Title = "Edit Contact";
+        _contact = contact;
+    }
+
+    private void ForDelete(Contact contact)
+    {
+        _contact = contact;
+    }
+
+    private async Task DeleteContact()
+    {
+        var contact = await ServiceContact.DeleteContactAsync(_contact.Id);
+        await JSRuntime.InvokeAsync<object>("HideModal", "deleteModal");
         await Load();
-        this.StateHasChanged();
-        Modal.OnClose -= ModalClosed;
     }
 
-    protected async Task SearchContact_Click()
+    private void AddEditForm_Close()
     {
-        if (String.IsNullOrEmpty(searchString) == false)
+        StateHasChanged();
+    }
+
+    private async Task SearchContact_Click()
+    {
+        if (string.IsNullOrEmpty(SearchString) == false)
         {
-            contacts = contacts.Where(c =>
-                         c.FirstName.Contains(searchString) ||
-                         c.LastName.Contains(searchString) ||
-                         c.MobileNo.Contains(searchString) ||
-                         c.EmailAddress.Contains(searchString) ||
-                         c.Address.Contains(searchString));
+            _contacts = _contacts.Where(c =>
+                         c.FirstName.Contains(SearchString) ||
+                         c.LastName.Contains(SearchString) ||
+                         c.MobileNo.Contains(SearchString) ||
+                         c.EmailAddress.Contains(SearchString) ||
+                         c.Address.Contains(SearchString));
         }
         else
         {

@@ -12,11 +12,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Contact Manager</title>
     <base href="~/" />
-    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/lib/font-awesome/css/all.css" rel="stylesheet" />
     <link href="css/site.css" rel="stylesheet" />
+    <link href="_content/Radzen.Blazor/css/default.css" rel="stylesheet" />
     <link href="_content/Blazored.Modal/blazored-modal.css" rel="stylesheet" />
-    <link rel="stylesheet" href="_content/Radzen.Blazor/css/default.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script>
+        function HideModal(modalId) {
+            $('#' + modalId).modal('hide');
+        }
+    </script>
 </head>
 <body>
     <app>
@@ -36,5 +41,7 @@
 
     <script src="_framework/blazor.server.js"></script>
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
+    <script src="~/lib/jquery/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
 </body>
 </html>

@@ -1,8 +1,7 @@
-﻿@using Web.Services
-@inject IModalService ModalService
+﻿@inject IModalService ModalService
 @inject ContactService ServiceContact
 
-<div class="simple-form">
+<div class="container">
     <div class="form-group">
         Are you sure you want to delete the record of @Contact.FirstName @Contact.LastName?
     </div>
@@ -11,26 +10,27 @@
         Yes
     </button>
 
-    <button @onclick="Cancel" class="btn btn-primary">No</button>
+    <button @onclick="Modal.Cancel" class="btn btn-primary">No</button>
 </div>
 
 @code {
     Contact Contact { get; set; }
-    [CascadingParameter] ModalParameters Parameters { get; set; }
+    [Parameter] public int Id { get; set; }
+    [CascadingParameter] BlazoredModalInstance Modal { get; set; }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        Contact = Parameters.Get<Contact>("Contact");
+        Contact = new Contact();
+
+        if (Id != 0)
+        {
+            Contact = await ServiceContact.GetContactByIdAsync(Id);
+        }
     }
 
-    protected async void DeleteContact(int id)
+    private async void DeleteContact(int id)
     {
         await ServiceContact.DeleteContactAsync(id);
-        ModalService.Close(ModalResult.Ok($"The user said 'Yes'"));
-    }
-
-    protected void Cancel()
-    {
-        ModalService.Close(ModalResult.Cancel());
+        Modal.Close(ModalResult.Ok($"The user said 'Yes'"));
     }
 }

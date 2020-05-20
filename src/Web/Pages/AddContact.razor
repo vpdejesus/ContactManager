@@ -1,12 +1,10 @@
 ﻿@page "/addcontact"
-@using Web.Services
-@using ApplicationCore.Entitites
 
 <RadzenContent Container="main">
     <ChildContent>
         <div class="row">
             <div class="col-md-12">
-                <RadzenTemplateForm Data="@(contact)" Visible="@(contact != null)" TItem="Contact" Submit="@Form_Submit">
+                <RadzenTemplateForm Data="@(Contact)" Visible="@(Contact != null)" TItem="Contact" Submit="@Form_Submit">
                     <ChildContent>
                         <div style="margin-bottom: 1rem" class="row">
                             <div class="col-md-3">
@@ -14,7 +12,7 @@
                                 </RadzenLabel>
                             </div>
                             <div class="col-md-9">
-                                <RadzenTextBox MaxLength="256" style="width: 100%" @bind-Value="@((contact.FirstName))" Name="FirstName">
+                                <RadzenTextBox MaxLength="256" style="width: 100%" @bind-Value="@((Contact.FirstName))" Name="FirstName">
                                 </RadzenTextBox>
                             </div>
                         </div>
@@ -24,7 +22,7 @@
                                 </RadzenLabel>
                             </div>
                             <div class="col-md-9">
-                                <RadzenTextBox MaxLength="256" style="width: 100%" @bind-Value="@((contact.LastName))" Name="LastName">
+                                <RadzenTextBox MaxLength="256" style="width: 100%" @bind-Value="@((Contact.LastName))" Name="LastName">
                                 </RadzenTextBox>
                             </div>
                         </div>
@@ -34,7 +32,7 @@
                                 </RadzenLabel>
                             </div>
                             <div class="col-md-9">
-                                <RadzenTextBox MaxLength="256" style="width: 100%" @bind-Value="@((contact.MobileNo))" Name="MobileNo">
+                                <RadzenTextBox MaxLength="256" style="width: 100%" @bind-Value="@((Contact.MobileNo))" Name="MobileNo">
                                 </RadzenTextBox>
                             </div>
                         </div>
@@ -44,7 +42,7 @@
                                 </RadzenLabel>
                             </div>
                             <div class="col-md-9">
-                                <RadzenTextBox MaxLength="256" style="display: block; width: 100%" @bind-Value="@((contact.EmailAddress))" Name="EmailAddress">
+                                <RadzenTextBox MaxLength="256" style="display: block; width: 100%" @bind-Value="@((Contact.EmailAddress))" Name="EmailAddress">
                                 </RadzenTextBox>
                                 <RadzenRequiredValidator Component="EmailAddress" Text="Email is required" style="position: absolute">
                                 </RadzenRequiredValidator>
@@ -56,7 +54,7 @@
                                 </RadzenLabel>
                             </div>
                             <div class="col-md-9">
-                                <RadzenTextBox MaxLength="256" style="width: 100%" @bind-Value="@((contact.Address))" Name="Address">
+                                <RadzenTextBox MaxLength="256" style="width: 100%" @bind-Value="@((Contact.Address))" Name="Address">
                                 </RadzenTextBox>
                             </div>
                         </div>
@@ -79,41 +77,38 @@
 @code {
 
     [Inject]
-    protected DialogService DialogService { get; set; }
+    private DialogService DialogService { get; set; }
     [Inject]
-    protected NotificationService NotificationService { get; set; }
+    private NotificationService NotificationService { get; set; }
     [Inject]
-    protected ContactService ContactService { get; set; }
+    private ContactService ContactService { get; set; }
 
     private Contact _contact;
 
-    protected Contact contact
+    private Contact Contact
     {
-        get
-        {
-            return _contact;
-        }
+        get => _contact;
         set
         {
             if (_contact != value)
             {
                 _contact = value;
-                InvokeAsync(() => { StateHasChanged(); });
+                InvokeAsync(StateHasChanged);
             }
         }
     }
 
     protected override void OnInitialized()
     {
-        contact = new Contact();
+        Contact = new Contact();
     }
 
-    protected async void Form_Submit(Contact args)
+    private async void Form_Submit()
     {
         try
         {
-            await ContactService.InsertContactAsync(contact);
-            DialogService.Close(contact);
+            await ContactService.InsertContactAsync(Contact);
+            DialogService.Close(Contact);
         }
         catch (Exception ex)
         {
@@ -121,7 +116,7 @@
         }
     }
 
-    protected void Cancel_Click(MouseEventArgs args)
+    private void Cancel_Click(MouseEventArgs args)
     {
         DialogService.Close(null);
     }
