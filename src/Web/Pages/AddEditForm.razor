@@ -1,0 +1,86 @@
+﻿@inject IJSRuntime JSRuntime
+@inject ContactService ServiceContact
+
+<div class="modal" id="contactModal" tabindex="-1" role="dialog" aria-labelledby="contactModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="titleLabel">@Title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cancel">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@Contact" OnValidSubmit="@HandleValidSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="form-group">
+                        <label for="first-name">First Name</label>
+                        <InputText id="first-name" @bind-Value="Contact.FirstName" class="form-control" placeholder="Enter First Name" />
+                        <ValidationMessage For="@(() => Contact.FirstName)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="last-name">Last Name</label>
+                        <InputText id="last-name" @bind-Value="Contact.LastName" class="form-control" placeholder="Enter Last Name" />
+                        <ValidationMessage For="@(() => Contact.LastName)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mobile-no">Mobile No.</label>
+                        <InputText id="mobile-no" @bind-Value="Contact.MobileNo" class="form-control" placeholder="Enter Mobile No." />
+                        <ValidationMessage For="@(() => Contact.LastName)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email-address">Email Address</label>
+                        <InputText id="email-address" @bind-Value="Contact.EmailAddress" class="form-control" placeholder="Enter Email Address" />
+                        <ValidationMessage For="@(() => Contact.EmailAddress)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <InputText id="address" @bind-Value="Contact.Address" class="form-control" placeholder="Enter Address" />
+                        <ValidationMessage For="@(() => Contact.EmailAddress)" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Save
+                    </button>
+                    <a class="btn btn-outline-primary" data-dismiss="modal">Cancel</a>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; }
+    [Parameter]
+    public Contact Contact { get; set; }
+    [Parameter]
+    public EventCallback<bool> OnClose { get; set; }
+
+    private async Task HideTaskModal()
+    {
+        await JSRuntime.InvokeAsync<object>("HideModal", "contactModal");
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (Contact.Id != 0)
+        {
+            await ServiceContact.UpdateContactAsync(Contact.Id, Contact);
+        }
+        else
+        {
+            await ServiceContact.InsertContactAsync(Contact);
+        }
+
+        await HideTaskModal();
+        await OnClose.InvokeAsync(true);
+    }
+}

@@ -1,0 +1,25 @@
+﻿<div class="modal" id="deleteModal" tabindex="-1" role="dialog" 
+     aria-labelledby="contactModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Confirmation</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Do you want to delete the record of @Contact.FirstName @Contact.LastName?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" @onclick="OnClick">Yes</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Contact Contact { get; set; }
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnClick { get; set; }
+}
