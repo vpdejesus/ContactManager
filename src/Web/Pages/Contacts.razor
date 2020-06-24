@@ -61,7 +61,7 @@ else
                         <Button data-toggle="modal" data-target="#contactModal"
                                 class="btn btn-outline-dark btn-sm text-center"
                                 @onclick="(() => EditForm_Click(contact))">
-                            <i class="far fa-edit"></i>
+                            <i class="fas fa-user-edit"></i>
                         </Button>
                         <Button data-toggle="modal" data-target="#deleteModal" 
                                 class="btn btn-outline-danger btn-sm text-center"
@@ -137,9 +137,10 @@ else
         await Load();
     }
 
-    private void AddEditForm_Close()
+    private async void AddEditForm_Close()
     {
-        StateHasChanged();
+        await Load();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task SearchContact_Click()
