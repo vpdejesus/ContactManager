@@ -1,5 +1,4 @@
 ﻿@page "/contacts"
-@inject IModalService Modal
 @inject IJSRuntime JSRuntime
 @inject ContactService ServiceContact
 
@@ -92,25 +91,6 @@ else
     private async Task Load()
     {
         _contacts = await ServiceContact.GetContactsAsync();
-    }
-
-    private void AddContact_Click()
-    {
-        Modal.Show<UpdateForm>("Add Contact");
-    }
-
-    private void EditContact_Click(int id)
-    {
-        var parameters = new ModalParameters();
-        parameters.Add(nameof(UpdateForm.Id), id);
-        Modal.Show<UpdateForm>("Edit Contact", parameters);
-    }
-
-    private void DeleteContact_Click(int id)
-    {
-        var parameters = new ModalParameters();
-        parameters.Add(nameof(DeleteForm.Id), id);
-        Modal.Show<DeleteForm>("Delete Contact", parameters);
     }
 
     private void AddForm_Click()

@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Components.Authorization;
 using Radzen;
-using Blazored.Modal;
 using Infrastructure.Data;
 using Infrastructure.Identity;
 using ApplicationCore.Interfaces;
@@ -52,8 +51,7 @@ namespace Web
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddAuthorizationCore();
-            services.AddBlazoredModal();
-           
+                       
             services.AddResponseCompression(opts =>
             {
                 opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
