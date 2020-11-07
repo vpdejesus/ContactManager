@@ -12,14 +12,12 @@
                         </RadzenButton>
                     </div>
                     <div class="input-group col-md-4 offset-md-5">
-                        <RadzenTextBox style="width: 250px" @bind-Value="@((SearchString))" Placeholder="Search Contact" Name="SearchBox">
-                        </RadzenTextBox>
-                        <RadzenButton Icon="search" style="margin-left: 5px" Click="@Search_Click">
-                        </RadzenButton>
+                        <input type="text" id="txtSearch" class="form-control" placeholder="Search Contact"
+                               @bind="SearchTerm" @bind:event="oninput" />
                     </div>
                 </div>
 
-                <RadzenGrid @ref="ContactGrid" AllowFiltering="true" AllowPaging="true" PageSize="10" AllowSorting="false"
+                <RadzenGrid @ref="ContactGrid" AllowFiltering="true" AllowPaging="true" PageSize="8" AllowSorting="false"
                             Data="@_contacts" TItem="Contact" Value="@_contact" RowDoubleClick="@ContactGrid_RowDoubleClick">
                     <Columns>
                         <RadzenGridColumn TItem="Contact" Property="FirstName" Title="First Name" Width="30" />
@@ -57,8 +55,7 @@
     RadzenGrid<Contact> ContactGrid;
     private IEnumerable<Contact> _contacts;
     private readonly Contact _contact = new Contact();
-    private string SearchString { get; set; }
-
+   
     protected override async Task OnInitializedAsync()
     {
         await Load();
@@ -104,21 +101,36 @@
         }
     }
 
-    private async void Search_Click()
+    private string searchTerm;
+
+    private string SearchTerm
     {
-        if (String.IsNullOrEmpty(SearchString) == false)
+        get { return searchTerm; }
+
+        set
+        {
+            searchTerm = value;
+            InvokeAsync(async () => await SearchContact());
+        }
+    }
+
+    private async Task SearchContact()
+    {
+        if (String.IsNullOrEmpty(searchTerm) == false)
         {
             _contacts = _contacts.Where(c =>
-                         c.FirstName.Contains(SearchString) ||
-                         c.LastName.Contains(SearchString) ||
-                         c.MobileNo.Contains(SearchString) ||
-                         c.EmailAddress.Contains(SearchString) ||
-                         c.Address.Contains(SearchString));
+                         c.FirstName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                         c.LastName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                         c.MobileNo.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                         c.EmailAddress.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                         c.Address.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
         }
         else
         {
             await Load();
         }
+
+        await InvokeAsync(StateHasChanged);
     }
 
     private async void ContactGrid_RowDoubleClick(Contact contact)

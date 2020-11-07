@@ -15,15 +15,8 @@
             </Button>
         </div>
         <div class="input-group col-md-4 offset-md-6">
-            <input type="text" class="form-control" placeholder="Search Contact" @bind="SearchString" />
-
-            <div class="text-right mb-4">
-                <Button style="margin-left: 5px" class="btn btn-primary btn-sm text-center"
-                        @onclick="SearchContact_Click">
-                    <i class="fas fa-search"></i>
-                    Search
-                </Button>
-            </div>
+            <input type="text" id="txtSearch" class="form-control" placeholder="Search Contact" 
+                   @bind="SearchTerm" @bind:event="oninput" />
         </div>
     </div>
 </div>
@@ -62,7 +55,7 @@ else
                                 @onclick="(() => EditForm_Click(contact))">
                             <i class="fas fa-user-edit"></i>
                         </Button>
-                        <Button data-toggle="modal" data-target="#deleteModal" 
+                        <Button data-toggle="modal" data-target="#deleteModal"
                                 class="btn btn-outline-danger btn-sm text-center"
                                 @onclick="(() => ForDelete(contact))">
                             <i class="fas fa-trash-alt"></i>
@@ -72,6 +65,40 @@ else
             }
         </tbody>
     </table>
+    @if (this.TotalPages() > 1)
+    {
+        <div>
+            @if (CurrentPage == 1)
+            {
+                <button disabled class="btn btn-outline-dark"><i class="fas fa-angle-double-left"></i></button>
+                <button disabled class="btn btn-outline-dark"><i class="fas fa-angle-left"></i></button>
+            }
+            else
+            {
+                <button class="btn btn-outline-dark" @onclick="@MoveFirst">
+                    <i class="fas fa-angle-double-left"></i>
+                </button>
+                <button class="btn btn-outline-dark" @onclick="@MoveBack">
+                    <i class="fas fa-angle-left"></i>
+                </button>
+            }
+            <span>@CurrentPage of @TotalPages() </span>
+            @if (!AtLastPage())
+            {
+                <button class="btn btn-outline-dark" @onclick="@MoveNext">
+                    <i class="fas fa-angle-right"></i>
+                </button>
+                <button class="btn btn-outline-dark" @onclick="@MoveLast">
+                    <i class="fas fa-angle-double-right"></i>
+                </button>
+            }
+            else
+            {
+                <button disabled class="btn btn-outline-dark"><i class="fas fa-angle-right"></i></button>
+                <button disabled class="btn btn-outline-dark"><i class="fas fa-angle-double-right"></i></button>
+            }
+        </div>
+    }
 }
 
 <AddEditForm Title="@Title" Contact="@_contact" OnClose="@AddEditForm_Close"></AddEditForm>
@@ -79,18 +106,26 @@ else
 
 @code {
     Contact _contact = new Contact();
-    private IEnumerable<Contact> _contacts;
     private string Title { get; set; }
     private string SearchString { get; set; }
+    private IEnumerable<Contact> _contacts;
+    private IEnumerable<Contact> ContactList { get; set; }
+
+    // Pagination
+    private int TotalCount;
+    private int CurrentPage = 1;
+    private int ItemsPerPage { get; set; } = 8;
 
     protected override async Task OnInitializedAsync()
     {
         await Load();
+        UpdateDisplay();
+        TotalCount = ContactList.Count();
     }
 
     private async Task Load()
     {
-        _contacts = await ServiceContact.GetContactsAsync();
+        ContactList = await ServiceContact.GetContactsAsync();
     }
 
     private void AddForm_Click()
@@ -115,28 +150,89 @@ else
         var contact = await ServiceContact.DeleteContactAsync(_contact.Id);
         await JSRuntime.InvokeAsync<object>("HideModal", "deleteModal");
         await Load();
+        UpdateDisplay();
     }
 
     private async void AddEditForm_Close()
     {
         await Load();
+        UpdateDisplay();
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task SearchContact_Click()
+    private string searchTerm;
+
+    private string SearchTerm
     {
-        if (string.IsNullOrEmpty(SearchString) == false)
+        get { return searchTerm; }
+
+        set
         {
-            _contacts = _contacts.Where(c =>
-                         c.FirstName.Contains(SearchString) ||
-                         c.LastName.Contains(SearchString) ||
-                         c.MobileNo.Contains(SearchString) ||
-                         c.EmailAddress.Contains(SearchString) ||
-                         c.Address.Contains(SearchString));
+            searchTerm = value;
+            InvokeAsync(async () => await SearchContact());
+        }
+    }
+
+    private async Task SearchContact()
+    {
+        if (string.IsNullOrEmpty(searchTerm) == false)
+        {
+            ContactList = ContactList.Where(c =>
+                     c.FirstName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                     c.LastName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                     c.MobileNo.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                     c.EmailAddress.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                     c.Address.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+
+            _contacts = ContactList;
+            TotalCount = ContactList.Count();
         }
         else
         {
             await Load();
+            UpdateDisplay();
+            TotalCount = ContactList.Count();
         }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void UpdateDisplay()
+    {
+        _contacts = ContactList.Skip((CurrentPage - 1) * ItemsPerPage).Take(ItemsPerPage).ToList();
+    }
+
+    private bool AtLastPage()
+    {
+        return CurrentPage >= TotalPages();
+    }
+
+    private int TotalPages()
+    {
+        return Convert.ToInt32(Math.Ceiling(TotalCount / Convert.ToDecimal(ItemsPerPage)));
+    }
+
+    private void MoveFirst()
+    {
+        CurrentPage = 1;
+        UpdateDisplay();
+    }
+
+    private void MoveBack()
+    {
+        CurrentPage--;
+        UpdateDisplay();
+    }
+
+    private void MoveNext()
+    {
+        CurrentPage++;
+        UpdateDisplay();
+    }
+
+    private void MoveLast()
+    {
+        CurrentPage = TotalPages();
+        UpdateDisplay();
     }
 }
