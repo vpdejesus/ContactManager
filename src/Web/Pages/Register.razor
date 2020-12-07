@@ -47,6 +47,21 @@
     private bool ShowErrors;
     private IEnumerable<string> Errors;
 
+    [CascadingParameter]
+    protected Task<AuthenticationState> AuthStat { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        base.OnInitialized();
+        var user = (await AuthStat).User;
+
+        // If user is already logged in then redirect to Home Page
+        if (user.Identity.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
     private async Task HandleRegistration()
     {
         ShowErrors = false;
